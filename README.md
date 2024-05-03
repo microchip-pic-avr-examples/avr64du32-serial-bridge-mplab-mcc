@@ -8,43 +8,77 @@
    </picture>
 </a>
 
-# Update the title for avr64du32-serial-bridge-mplab-mcc here
+# USB to SPI/I<sup>2</sup>C Converter with AVR64DU32
 
-<!-- This is where the introduction to the example goes, including mentioning the peripherals used -->
+The AVR&reg; DU family of microcontrollers (MCU) contain a Full Speed (12 Mbps) USB Transceiver for developing low cost USB devices. In this example, the AVR64DU32 MCU bridges a host computer with low-level SPI and I<sup>2</sup>C communication with the USB Communication Device Class (CDC). 
 
 ## Related Documentation
 
-<!-- Any information about an application note or tech brief can be linked here. Use unbreakable links!
-     In addition a link to the device family landing page and relevant peripheral pages as well:
-     - [AN3381 - Brushless DC Fan Speed Control Using Temperature Input and Tachometer Feedback](https://microchip.com/00003381/)
-     - [PIC18F-Q10 Family Product Page](https://www.microchip.com/design-centers/8-bit/pic-mcus/device-selection/pic18f-q10-product-family) -->
 
 ## Software Used
 
-<!-- All software used in this example must be listed here. Use unbreakable links!
-     - MPLAB® X IDE 5.30 or newer [(microchip.com/mplab/mplab-x-ide)](http://www.microchip.com/mplab/mplab-x-ide)
-     - MPLAB® XC8 2.10 or a newer compiler [(microchip.com/mplab/compilers)](http://www.microchip.com/mplab/compilers)
-     - MPLAB® Code Configurator (MCC) 3.95.0 or newer [(microchip.com/mplab/mplab-code-configurator)](https://www.microchip.com/mplab/mplab-code-configurator)
-     - MPLAB® Code Configurator (MCC) Device Libraries PIC10 / PIC12 / PIC16 / PIC18 MCUs [(microchip.com/mplab/mplab-code-configurator)](https://www.microchip.com/mplab/mplab-code-configurator)
-     - Microchip PIC18F-Q Series Device Support (1.4.109) or newer [(packs.download.microchip.com/)](https://packs.download.microchip.com/) -->
-
-- MPLAB® X IDE 6.20.0 or newer [(MPLAB® X IDE 6.20)](https://www.microchip.com/en-us/development-tools-tools-and-software/mplab-x-ide)
-- MPLAB® XC8 2.46.0 or newer compiler [(MPLAB® XC8 2.46)](https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers/xc8)
+- [MPLAB&reg; X IDE v6.20 or newer](#)
+- [MPLAB XC8 v2.46 or newer compiler](#)
+- MPLAB Code Configurator
 
 ## Hardware Used
 
-<!-- All hardware used in this example must be listed here. Use unbreakable links!
-     - PIC18F47Q10 Curiosity Nano [(DM182029)](https://www.microchip.com/Developmenttools/ProductDetails/DM182029)
-     - Curiosity Nano Base for Click boards™ [(AC164162)](https://www.microchip.com/Developmenttools/ProductDetails/AC164162)
-     - POT Click board™ [(MIKROE-3402)](https://www.mikroe.com/pot-click) -->
+- [AVR64DU32 Curiosity Nano Evaluation Kit (???)](#)
+- [Curiosity Nano Explorer Board (???)](#)
+     - The Explorer board is not required, as SPI and I<sup>2</sup>C can be performed on other platforms, but the Explorer board comes with a wide variety of serial sensors to interface with. 
 
 ## Setup
 
-<!-- Explain how to connect hardware and set up software. Depending on complexity, step-by-step instructions and/or tables and/or images can be used -->
+- Disconnect the EEPROM Hold Jumper (Jumper 13)
 
 ## Operation
 
-<!-- Explain how to operate the example. Depending on complexity, step-by-step instructions and/or tables and/or images can be used -->
+### LED Status
+
+LED0 on the Curiosity Nano is used to indicate the status of the USB Communication. If the LED is ON, that means the application's USB state machine is in the `USB_READY` state. If the LED is OFF, that indicates the application's state machine is in `USB_DISCONNECTED` or `USB_ERROR`.
+
+### Serial Commands
+
+When a USB is attached to the AVR DU, the device enumerates a CDC Class USB device, which allows a serial terminal to exchange data with the MCU. The AVR DU functions as a SPI and I<sup>2</sup>C Host that performs the communication specified by the command sent by the user.
+
+**Note**: Commands are not case sensitive, but all numbers sent and received are in hexadecimal format.  
+
+![Serial Terminal Output](./images/serialTerminalOutput.png)  
+
+#### SPI
+
+SPI commands take the format of the following:
+
+- spi eeprom \<bytes to send\>  
+- spi dac \<bytes to send\>
+
+For instance, to read the identification register of the 25CSM04 EEPROM, send the following the command: 
+
+> spi eeprom 9F 00 00 00 00 00 
+
+The response is the following:
+
+> FF 29 CC 00 01 00
+
+The first byte (FF) is a don't care as the EEPROM has it's SDO (MISO) line set to High-Z during this time.
+
+#### I<sup>2</sup>C
+
+I<sup>2</sup>C commands take the format of:
+
+- i2c \<address\> r \<number of bytes to read>
+- i2c \<address\> w \<bytes to write>
+- i2c \<address\> wr \<register address byte> \<bytes to read\>
+
+The Write Read (wr) operation first addresses the I<sup>2</sup>C device in write mode, writes 1 byte (register address byte), restarts the bus, re-addresses the device in read mode, then reads (bytes to read) amount of data. 
+
+For instance, to get the manufacturer's ID from the MCP9808:
+> i2c 1c wr 06 02
+
+This command will return the following bytes:
+> 00 54
+
+
 
 ## Summary
 
