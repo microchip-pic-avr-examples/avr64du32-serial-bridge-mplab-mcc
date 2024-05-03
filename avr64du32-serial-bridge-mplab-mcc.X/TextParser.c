@@ -10,6 +10,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef enum {
+    COMMAND_OK = 0, COMMAND_INVALID, COMMAND_ADDR_NACK, COMMAND_DATA_NACK
+} command_error_t;
+
+typedef enum {
+    SERIAL_UNKNOWN = 0, SERIAL_SPI_DAC, SERIAL_SPI_EEPROM, SERIAL_I2C_READ, SERIAL_I2C_WRITE, SERIAL_I2C_WRITE_READ
+} serial_type_t;
+
 //Text Buffer
 static char buffer[PARSER_BUFFER_SIZE];
 static uint8_t textLength = 0;
@@ -265,12 +273,13 @@ void TextParser_Handle(void)
      * I2C RW <ADDR> <REG ADDR (1 Byte)> <LEN>
      */
     
-    bool isGood = true;
+    command_error_t commandStatus = COMMAND_INVALID;
+    serial_type_t serialType = SERIAL_UNKNOWN;
     uint8_t serialBytes[MAX_SERIAL_PARAMETERS];
+    uint8_t len;
     
     if (Parser_StringContains("SPI"))
     {
-        TextQueue_AddText("SPI Command\r\n");
         if (Parser_Advance())
         {
             //Advance to next parameter
@@ -279,20 +288,24 @@ void TextParser_Handle(void)
                 //Advance to next chunk
                 Parser_Advance();
                 
+                serialType = SERIAL_SPI_EEPROM;
+                
                 //Convert everything else to <data> parameters
-                uint8_t parms = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
-                if (parms == 0)
+                len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
+                if (len == 0)
                 {
                     //Nothing to convert, or conversion error
-                    isGood = false;
+                    commandStatus = COMMAND_INVALID;
                 }
                 else
                 {
                     //Conversion Success
                     EEPROM_CS_SetLow();
                     DELAY_microseconds(1);
-                    SPI0_Host_BufferExchange(serialBytes, parms);
+                    SPI0_Host_BufferExchange(serialBytes, len);
                     EEPROM_CS_SetHigh();
+                    
+                    commandStatus = COMMAND_OK;
                 }
             }
             else if (Parser_StringContains("DAC"))
@@ -300,30 +313,26 @@ void TextParser_Handle(void)
                 //Advance to next chunk
                 Parser_Advance();
                 
+                serialType = SERIAL_SPI_DAC;
+                
                 //Convert everything else to <data> parameters
-                uint8_t parms = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
-                if (parms == 0)
+                len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
+                if (len == 0)
                 {
                     //Nothing to convert, or conversion error
-                    isGood = false;
+                    commandStatus = COMMAND_INVALID;
                 }
                 else
                 {
                     //Conversion Success
                     DAC_CS_SetLow();
                     DELAY_microseconds(1);
-                    SPI0_Host_BufferExchange(serialBytes, parms);
+                    SPI0_Host_BufferExchange(serialBytes, len);
                     DAC_CS_SetHigh();
+                    
+                    commandStatus = COMMAND_OK;
                 }
             }
-            else
-            {
-                isGood = false;
-            }
-        }
-        else
-        {
-            isGood = false;
         }
     }
     else if (Parser_StringContains("I2C"))
@@ -331,7 +340,6 @@ void TextParser_Handle(void)
         if (Parser_Advance())
         {
             uint8_t addr;
-            uint8_t len;
             
             //Get the Address
             if (Parser_ConvertStringToHex(&addr))
@@ -343,109 +351,204 @@ void TextParser_Handle(void)
                     if (Parser_StringMatch("R"))
                     {
                         //Read Command
-                        if (Parser_Advance())
+                        Parser_Advance();
+                        
+                        serialType = SERIAL_I2C_READ;
+                                
+                        //Get # of Bytes to Read
+                        if (Parser_ConvertStringToHex(&len))
                         {
-                            //Get # of Bytes to Read
-                            if (Parser_ConvertStringToHex(&len))
+                            //Length Found
+                            I2C0_Host_Read(addr, serialBytes, len);
+                            while (I2C0_Host_IsBusy())
                             {
-                                //Length Found
-                                I2C0_Host_Read(addr, serialBytes, len);
-                                while (I2C0_Host_IsBusy())
+                                I2C0_Host_Tasks();
+                            }
+
+                            switch (I2C0_Host_ErrorGet())
+                            {
+                                case I2C_ERROR_NONE:
                                 {
-                                    I2C0_Host_Tasks();
+                                    commandStatus = COMMAND_OK;
+                                    break;
+                                }
+                                case I2C_ERROR_ADDR_NACK:
+                                {
+                                    commandStatus = COMMAND_ADDR_NACK;
+                                    break;
+                                }
+                                case I2C_ERROR_DATA_NACK:
+                                {
+                                    commandStatus = COMMAND_DATA_NACK;
+                                    break;
+                                }
+                                default:
+                                {
+
                                 }
                             }
-                            else
-                            {
-                                isGood = false;
-                            }
-                        }
-                        else
-                        {
-                            isGood = false;
                         }
                     }
                     else if (Parser_StringMatch("W"))
                     {
                         //Write Command
+                        Parser_Advance();
                         
-                        if (Parser_Advance())
+                        serialType = SERIAL_I2C_WRITE;
+                        
+                        //Get Bytes to Transmit
+                        len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
+
+                        if (len > 0)
                         {
-                            //Get Bytes to Transmit
-                            len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
-                        
-                            if (len > 0)
+                            //Bytes found
+                            I2C0_Host_Write(addr, serialBytes, len);
+                            while (I2C0_Host_IsBusy())
                             {
-                                //Bytes found
-                                I2C0_Host_Write(addr, serialBytes, len);
-                                while (I2C0_Host_IsBusy())
+                                I2C0_Host_Tasks();
+                            }
+                            
+                            switch (I2C0_Host_ErrorGet())
+                            {
+                                case I2C_ERROR_NONE:
                                 {
-                                    I2C0_Host_Tasks();
+                                    commandStatus = COMMAND_OK;
+                                    break;
+                                }
+                                case I2C_ERROR_ADDR_NACK:
+                                {
+                                    commandStatus = COMMAND_ADDR_NACK;
+                                    break;
+                                }
+                                case I2C_ERROR_DATA_NACK:
+                                {
+                                    commandStatus = COMMAND_DATA_NACK;
+                                    break;
+                                }
+                                default:
+                                {
+
                                 }
                             }
-                            else
-                            {
-                                isGood = false;
-                            }
-                        }
-                        else
-                        {
-                            isGood = false;
                         }
                     }
                     else if (Parser_StringMatch("WR"))
                     {
                         //Write then Read
+                        Parser_Advance();
                         
-                        if (Parser_Advance())
-                        {
-                            //Get Bytes
-                            len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
+                        serialType = SERIAL_I2C_WRITE_READ;
+                        
+                        //Get Bytes
+                        len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
 
-                            if (len == 2)
+                        if (len == 2)
+                        {
+                            //Bytes found
+                            
+                            //Read Length is in byte 2
+                            len = serialBytes[1];
+                            
+                            I2C0_Host_WriteRead(addr, serialBytes, 1, (serialBytes),len);
+                            while (I2C0_Host_IsBusy())
                             {
-                                //Bytes found
-                                I2C0_Host_WriteRead(addr, serialBytes, 1, (serialBytes), serialBytes[1]);
-                                while (I2C0_Host_IsBusy())
+                                I2C0_Host_Tasks();
+                            }
+
+                            switch (I2C0_Host_ErrorGet())
+                            {
+                                case I2C_ERROR_NONE:
                                 {
-                                    I2C0_Host_Tasks();
+                                    commandStatus = COMMAND_OK;
+                                    break;
+                                }
+                                case I2C_ERROR_ADDR_NACK:
+                                {
+                                    commandStatus = COMMAND_ADDR_NACK;
+                                    break;
+                                }
+                                case I2C_ERROR_DATA_NACK:
+                                {
+                                    commandStatus = COMMAND_DATA_NACK;
+                                    break;
+                                }
+                                default:
+                                {
+
                                 }
                             }
-                            else
-                            {
-                                isGood = false;
-                            }
                         }
-                        else
-                        {
-                            isGood = false;
-                        }
-                    }
-                    else
-                    {
-                        isGood = false;
                     }
                 }
                 
             }
-            else
-            {
-                isGood = false;
-            }
         }
-        else
-        {
-            isGood = false;
-        }
-    }
-    else
-    {
-        isGood = false;
     }
     
-    if (!isGood)
+    switch (commandStatus)
     {
-        TextQueue_AddText("Command Error\r\n");
+        case COMMAND_OK:
+        {
+            //Print results
+            switch (serialType)
+            {
+                case SERIAL_SPI_EEPROM:
+                {
+                    //EEPROM
+                    TextQueue_AddText("SPI - EEPROM Communication\r\n");
+                    break;
+                }
+                case SERIAL_SPI_DAC:
+                {
+                    //DAC
+                    TextQueue_AddText("SPI - DAC Communication\r\n");
+                    break;
+                }
+                case SERIAL_I2C_READ:
+                {
+                    //I2C Read
+                    TextQueue_AddText("I2C - Read\r\n");
+                    break;
+                }
+                case SERIAL_I2C_WRITE:
+                {
+                    //I2C Write
+                    TextQueue_AddText("I2C - Write\r\n");
+                    break;
+                }
+                case SERIAL_I2C_WRITE_READ:
+                {
+                    //I2C Write/Read
+                    TextQueue_AddText("I2C - Write then Read\r\n");
+                    break;
+                }
+                default:
+                {
+                    TextQueue_AddText("Unknown communication type\r\n");
+                }
+            }
+            break;
+        }
+        case COMMAND_INVALID:
+        {
+            TextQueue_AddText("Command parsing error\r\n");
+            break;
+        }
+        case COMMAND_ADDR_NACK:
+        {
+            TextQueue_AddText("I2C NACK error\r\n");
+            break;
+        }
+        case COMMAND_DATA_NACK:
+        {
+            TextQueue_AddText("I2C communication error\r\n");
+            break;
+        }
+        default:
+        {
+            //Shouldn't get here
+            TextQueue_AddText("Unknown error\r\n");
+        }
     }
     
     //Clean-up
