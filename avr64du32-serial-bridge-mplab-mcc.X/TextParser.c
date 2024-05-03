@@ -24,7 +24,7 @@ static uint8_t textLength = 0;
 static uint8_t readPos = 0;
 
 //Advances to the position after the next ' ' or EOF in the string
-bool Parser_Advance(void)
+bool AdvanceBuffer(void)
 {
     while ((buffer[readPos] != '\0') && (buffer[readPos] != ' '))
     {
@@ -56,7 +56,7 @@ bool Parser_Advance(void)
 }
 
 //Checks to see if the current "chunk" of the sentence contains the reference
-bool Parser_StringContains(const char* ref)
+bool StringContains(const char* ref)
 {
     char* ptr = buffer + readPos;
     uint8_t cIndex = 0;
@@ -102,7 +102,7 @@ bool Parser_StringContains(const char* ref)
 }
 
 //Checks to see if the current "chunk" of the sentence matches the reference
-bool Parser_StringMatch(const char* ref)
+bool StringMatch(const char* ref)
 {
     char* ptr = buffer + readPos;
     uint8_t cIndex = 0;
@@ -139,7 +139,7 @@ bool Parser_StringMatch(const char* ref)
 }
 
 //Tries to convert the current "chunk" of the sentence
-bool Parser_ConvertStringToHex(uint8_t* dst)
+bool ConvertStringToHex(uint8_t* dst)
 {
     char* ptr = buffer + readPos;
     uint8_t result;
@@ -191,13 +191,13 @@ bool Parser_ConvertStringToHex(uint8_t* dst)
     return true;
 }
 
-uint8_t Parser_ConvertTextToHexArray(uint8_t* dst, uint8_t maxLen)
+uint8_t ConvertTextToHexArray(uint8_t* dst, uint8_t maxLen)
 {
     uint8_t len = 0;
     do
     {
         //Convert the chunk to a hex number
-        if (!Parser_ConvertStringToHex((dst + len)))
+        if (!ConvertStringToHex((dst + len)))
         {
             //Failed to convert
             return 0;
@@ -205,10 +205,53 @@ uint8_t Parser_ConvertTextToHexArray(uint8_t* dst, uint8_t maxLen)
         len++;
         
         //Advance to next chunk
-    } while (Parser_Advance());
+    } while (AdvanceBuffer());
     
     //Return number of hex values
     return len;
+}
+
+void LoadDataToOutputQueue(uint8_t* data, uint8_t len)
+{
+    TextQueue_AddText("> ");
+    
+    char buffer[4] = {'?', '?', ' ', '\0'};
+    uint8_t temp;
+    
+    for (uint8_t i = 0; i < len; i++)
+    {
+        //High Nibble
+        temp = data[i] >> 4;
+        
+        if (temp > 9)
+        {
+            //A-F Output
+            temp -= 10;
+            buffer[0] = temp + 'A';
+        }
+        else
+        {
+            buffer[0] = temp + '0';
+        }
+        
+        //Low Nibble
+        temp = data[i] & 0x0F;
+        
+        if (temp > 9)
+        {
+            //A-F Output
+            temp -= 10;
+            buffer[1] = temp + 'A';
+        }
+        else
+        {
+            buffer[1] = temp + '0';
+        }
+        
+        TextQueue_AddText(buffer);
+    }
+    
+    TextQueue_AddText("\r\n");
 }
 
 //Initialize the text parser
@@ -278,20 +321,20 @@ void TextParser_Handle(void)
     uint8_t serialBytes[MAX_SERIAL_PARAMETERS];
     uint8_t len;
     
-    if (Parser_StringContains("SPI"))
+    if (StringContains("SPI"))
     {
-        if (Parser_Advance())
+        if (AdvanceBuffer())
         {
             //Advance to next parameter
-            if (Parser_StringContains("EEPROM"))
+            if (StringContains("EEPROM"))
             {
                 //Advance to next chunk
-                Parser_Advance();
+                AdvanceBuffer();
                 
                 serialType = SERIAL_SPI_EEPROM;
                 
                 //Convert everything else to <data> parameters
-                len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
+                len = ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
                 if (len == 0)
                 {
                     //Nothing to convert, or conversion error
@@ -308,15 +351,15 @@ void TextParser_Handle(void)
                     commandStatus = COMMAND_OK;
                 }
             }
-            else if (Parser_StringContains("DAC"))
+            else if (StringContains("DAC"))
             {
                 //Advance to next chunk
-                Parser_Advance();
+                AdvanceBuffer();
                 
                 serialType = SERIAL_SPI_DAC;
                 
                 //Convert everything else to <data> parameters
-                len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
+                len = ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
                 if (len == 0)
                 {
                     //Nothing to convert, or conversion error
@@ -335,28 +378,28 @@ void TextParser_Handle(void)
             }
         }
     }
-    else if (Parser_StringContains("I2C"))
+    else if (StringContains("I2C"))
     {
-        if (Parser_Advance())
+        if (AdvanceBuffer())
         {
             uint8_t addr;
             
             //Get the Address
-            if (Parser_ConvertStringToHex(&addr))
+            if (ConvertStringToHex(&addr))
             {
                 //Address found
-                if (Parser_Advance())
+                if (AdvanceBuffer())
                 {
                     //Advance to type of operation
-                    if (Parser_StringMatch("R"))
+                    if (StringMatch("R"))
                     {
                         //Read Command
-                        Parser_Advance();
+                        AdvanceBuffer();
                         
                         serialType = SERIAL_I2C_READ;
                                 
                         //Get # of Bytes to Read
-                        if (Parser_ConvertStringToHex(&len))
+                        if (ConvertStringToHex(&len))
                         {
                             //Length Found
                             I2C0_Host_Read(addr, serialBytes, len);
@@ -389,15 +432,15 @@ void TextParser_Handle(void)
                             }
                         }
                     }
-                    else if (Parser_StringMatch("W"))
+                    else if (StringMatch("W"))
                     {
                         //Write Command
-                        Parser_Advance();
+                        AdvanceBuffer();
                         
                         serialType = SERIAL_I2C_WRITE;
                         
                         //Get Bytes to Transmit
-                        len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
+                        len = ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
 
                         if (len > 0)
                         {
@@ -432,15 +475,15 @@ void TextParser_Handle(void)
                             }
                         }
                     }
-                    else if (Parser_StringMatch("WR"))
+                    else if (StringMatch("WR"))
                     {
                         //Write then Read
-                        Parser_Advance();
+                        AdvanceBuffer();
                         
                         serialType = SERIAL_I2C_WRITE_READ;
                         
                         //Get Bytes
-                        len = Parser_ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
+                        len = ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
 
                         if (len == 2)
                         {
@@ -495,31 +538,31 @@ void TextParser_Handle(void)
                 case SERIAL_SPI_EEPROM:
                 {
                     //EEPROM
-                    TextQueue_AddText("SPI - EEPROM Communication\r\n");
+                    LoadDataToOutputQueue(serialBytes, len);
                     break;
                 }
                 case SERIAL_SPI_DAC:
                 {
                     //DAC
-                    TextQueue_AddText("SPI - DAC Communication\r\n");
+                    LoadDataToOutputQueue(serialBytes, len);
                     break;
                 }
                 case SERIAL_I2C_READ:
                 {
                     //I2C Read
-                    TextQueue_AddText("I2C - Read\r\n");
+                    LoadDataToOutputQueue(serialBytes, len);
                     break;
                 }
                 case SERIAL_I2C_WRITE:
                 {
                     //I2C Write
-                    TextQueue_AddText("I2C - Write\r\n");
+                    TextQueue_AddText("> OK\r\n");
                     break;
                 }
                 case SERIAL_I2C_WRITE_READ:
                 {
                     //I2C Write/Read
-                    TextQueue_AddText("I2C - Write then Read\r\n");
+                    LoadDataToOutputQueue(serialBytes, len);
                     break;
                 }
                 default:
