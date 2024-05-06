@@ -4,8 +4,8 @@
     "content": {
         "metaDataVersion": "1.3.0",
         "name": "com.microchip.mcu8.mplabx.project.avr64du32-serial-bridge-mplab-mcc",
-        "version": " ",
-        "displayName": "",
+        "version": "1.0.0",
+        "displayName": "USB to SPI/I2C Converter with AVR64DU32",
         "projectName": "avr64du32-serial-bridge-mplab-mcc",
         "shortDescription": "Create a USB to SPI/I2C bridge using AVR64DU32",
         "ide": {
@@ -19,12 +19,12 @@
             }
         ],
         "dfp": {
-            "name": "",
-            "semverRange": ""
+            "name": "AVR-Dx_DFP",
+            "semverRange": "^2.4.286"
         },
         "configurator": {
-            "name": "",
-            "semverRange": ""
+            "name": "MCC",
+            "semverRange": ">=5.5.1"
         },
         "device": {
             "metaDataVersion": "1.0.0",
@@ -37,8 +37,12 @@
             }
         },
         "author": "Robert Perkel",
-        "peripherals": [],
-        "keywords": [],
+        "peripherals": [
+            "USB", "SPI", "TWI"
+        ],
+        "keywords": [
+            "USB FS", "Serial Communication"
+        ],
         "additionalData": {
             "longDescription": {
                 "metaDataVersion": "1.0.0",

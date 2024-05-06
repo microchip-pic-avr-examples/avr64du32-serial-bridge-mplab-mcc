@@ -13,23 +13,25 @@
 The AVR&reg; DU family of microcontrollers (MCU) contain a Full Speed (12 Mbps) USB Transceiver for developing low cost USB devices. In this example, the AVR64DU32 MCU bridges a host computer with low-level SPI and I<sup>2</sup>C communication with the USB Communication Device Class (CDC). 
 
 ## Related Documentation
-
+- [AVR DU Family](https://www.microchip.com/en-us/products/microcontrollers-and-microprocessors/8-bit-mcus/avr-mcus/avr-du?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_AVR-DU&utm_content=avr64du32-serial-bridge-mplab-mcc-github&utm_bu=MCU08)  
 
 ## Software Used
 
-- [MPLAB&reg; X IDE v6.20 or newer](#)
-- [MPLAB XC8 v2.46 or newer compiler](#)
-- MPLAB Code Configurator
+- [MPLAB&reg; X IDE v6.20 or newer](https://www.microchip.com/en-us/tools-resources/develop/mplab-x-ide?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_AVR-DU&utm_content=avr64du32-serial-bridge-mplab-mcc-github&utm_bu=MCU08)
+- [MPLAB XC8 v2.46 or newer compiler](https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_AVR-DU&utm_content=avr64du32-serial-bridge-mplab-mcc-github&utm_bu=MCU08)
+- [MPLAB Code Configurator](https://www.microchip.com/en-us/tools-resources/configure/mplab-code-configurator?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_AVR-DU&utm_content=avr64du32-serial-bridge-mplab-mcc-github&utm_bu=MCU08)
 
 ## Hardware Used
 
-- [AVR64DU32 Curiosity Nano Evaluation Kit (???)](#)
-- [Curiosity Nano Explorer Board (???)](#)
+- [AVR64DU32 Curiosity Nano Evaluation Kit (EV59F82A)](https://www.microchip.com/en-us/development-tool/EV59F82A?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_AVR-DU&utm_content=avr64du32-serial-bridge-mplab-mcc-github&utm_bu=MCU08)
+- [Curiosity Nano Explorer Board (EV58G97A)](https://www.microchip.com/en-us/development-tool/EV58G97A?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_AVR-DU&utm_content=avr64du32-serial-bridge-mplab-mcc-github&utm_bu=MCU08)
      - The Explorer board is not required, as SPI and I<sup>2</sup>C can be performed on other platforms, but the Explorer board comes with a wide variety of serial sensors to interface with. 
 
 ## Setup
 
-- Disconnect the EEPROM Hold Jumper (Jumper 13)
+TODO: Image
+
+**Note**: For communication with the EEPROM, disconnect jumper 13 (EEPROM HOLD), as the Curiosity Nano LED conflicts with this signal.
 
 ## Operation
 
@@ -78,8 +80,6 @@ For instance, to get the manufacturer's ID from the MCP9808:
 This command will return the following bytes:
 > 00 54
 
-
-
 ## Summary
 
-<!-- Summarize what the example has shown -->
+This example has demonstrated the AVR DU as a USB to I<sup>2</sup>C / SPI Converter.
