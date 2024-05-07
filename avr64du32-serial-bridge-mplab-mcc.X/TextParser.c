@@ -15,7 +15,7 @@ typedef enum {
 } command_error_t;
 
 typedef enum {
-    SERIAL_UNKNOWN = 0, SERIAL_SPI_DAC, SERIAL_SPI_EEPROM, SERIAL_I2C_READ, SERIAL_I2C_WRITE, SERIAL_I2C_WRITE_READ
+    SERIAL_UNKNOWN = 0, SERIAL_SPI_DAC, SERIAL_SPI_EEPROM, SERIAL_SPI_USD, SERIAL_I2C_READ, SERIAL_I2C_WRITE, SERIAL_I2C_WRITE_READ
 } serial_type_t;
 
 //Text Buffer
@@ -326,7 +326,7 @@ void TextParser_Handle(void)
         if (AdvanceBuffer())
         {
             //Advance to next parameter
-            if (StringContains("EEPROM"))
+            if (StringMatch("EEPROM"))
             {
                 //Advance to next chunk
                 AdvanceBuffer();
@@ -351,7 +351,7 @@ void TextParser_Handle(void)
                     commandStatus = COMMAND_OK;
                 }
             }
-            else if (StringContains("DAC"))
+            else if (StringMatch("DAC"))
             {
                 //Advance to next chunk
                 AdvanceBuffer();
@@ -375,6 +375,32 @@ void TextParser_Handle(void)
                     
                     commandStatus = COMMAND_OK;
                 }
+            }
+            else if (StringMatch("USD"))
+            {
+                //Advance to next chunk
+                AdvanceBuffer();
+                
+                serialType = SERIAL_SPI_USD;
+                
+                //Convert everything else to <data> parameters
+                len = ConvertTextToHexArray(serialBytes, MAX_SERIAL_PARAMETERS);
+                if (len == 0)
+                {
+                    //Nothing to convert, or conversion error
+                    commandStatus = COMMAND_INVALID;
+                }
+                else
+                {
+                    //Conversion Success
+                    uSD_CS_SetLow();
+                    DELAY_microseconds(1);
+                    SPI0_Host_BufferExchange(serialBytes, len);
+                    uSD_CS_SetHigh();
+                    
+                    commandStatus = COMMAND_OK;
+                }
+
             }
         }
     }
@@ -536,14 +562,10 @@ void TextParser_Handle(void)
             switch (serialType)
             {
                 case SERIAL_SPI_EEPROM:
-                {
-                    //EEPROM
-                    LoadDataToOutputQueue(serialBytes, len);
-                    break;
-                }
                 case SERIAL_SPI_DAC:
+                case SERIAL_SPI_USD:
                 {
-                    //DAC
+                    //SPI Communication
                     LoadDataToOutputQueue(serialBytes, len);
                     break;
                 }
