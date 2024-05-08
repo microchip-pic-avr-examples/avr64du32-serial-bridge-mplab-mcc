@@ -65,6 +65,8 @@ SPI commands have the following format:
 - spi dac \<bytes to send\>
 - spi usd \<bytes to send\>
 
+**Note**: See the setup section for more information about using the `usd` parameter.
+
 For instance, to read the identification register of the 25CSM04 EEPROM, send the following command: 
 
 > spi eeprom 9F 00 00 00 00 00 
