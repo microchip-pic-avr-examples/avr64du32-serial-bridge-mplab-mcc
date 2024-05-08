@@ -1,5 +1,5 @@
-#ifndef TEXTQUEUE_H
-#define	TEXTQUEUE_H
+#ifndef TEXT_QUEUE_H
+#define	TEXT_QUEUE_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -20,5 +20,5 @@ extern "C" {
 }
 #endif
 
-#endif	/* TEXTQUEUE_H */
+#endif	/* TEXT_QUEUE_H */
 

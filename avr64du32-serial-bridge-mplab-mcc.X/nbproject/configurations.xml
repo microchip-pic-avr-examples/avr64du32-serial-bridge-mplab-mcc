@@ -88,8 +88,8 @@
         </logicalFolder>
       </logicalFolder>
       <itemPath>ringBuffer.h</itemPath>
-      <itemPath>TextParser.h</itemPath>
-      <itemPath>TextQueue.h</itemPath>
+      <itemPath>text_queue.h</itemPath>
+      <itemPath>text_parser.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -179,8 +179,8 @@
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>ringBuffer.c</itemPath>
-      <itemPath>TextParser.c</itemPath>
-      <itemPath>TextQueue.c</itemPath>
+      <itemPath>text_queue.c</itemPath>
+      <itemPath>text_parser.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>

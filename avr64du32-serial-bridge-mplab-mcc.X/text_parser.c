@@ -1,10 +1,9 @@
-#include "TextParser.h"
+#include "text_parser.h"
 
 #include <xc.h>
 #include "mcc_generated_files/system/system.h"
-#include "mcc_generated_files/usb/usb_cdc/circular_buffer/circular_buffer.h"
 #include "mcc_generated_files/usb/usb_cdc/usb_cdc_virtual_serial_port.h"
-#include "TextQueue.h"
+#include "text_queue.h"
 #include "mcc_generated_files/timer/delay.h"
 
 #include <stdint.h>

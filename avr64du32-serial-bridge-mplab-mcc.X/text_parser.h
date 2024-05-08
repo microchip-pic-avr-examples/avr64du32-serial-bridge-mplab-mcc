@@ -1,5 +1,5 @@
-#ifndef PARSER_H
-#define	PARSER_H
+#ifndef TEXT_PARSER_H
+#define	TEXT_PARSER_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -21,5 +21,5 @@ extern "C" {
 }
 #endif
 
-#endif	/* PARSER_H */
+#endif	/* TEXT_PARSER_H */
 

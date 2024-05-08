@@ -37,10 +37,9 @@
 #include "mcc_generated_files/system/system.h"
 #include "usb_core.h"
 #include "usb_cdc_virtual_serial_port.h"
-#include "circular_buffer.h"
 
-#include "TextQueue.h"
-#include "TextParser.h"
+#include "text_queue.h"
+#include "text_parser.h"
 
 #define USB_MAX_RETRIES 10
 

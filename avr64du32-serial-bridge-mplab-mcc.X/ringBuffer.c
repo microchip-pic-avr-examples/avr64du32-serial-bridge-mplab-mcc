@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 //Creates a ringBuffer from a pool of memory
-void ringBuffer_createBuffer(RingBuffer* buffer, char* memPtr, RingBufferSize size)
+void ringBuffer_createBuffer(rint_buffer_t* buffer, char* memPtr, ring_buffer_size_t size)
 {
     buffer->memory = memPtr;
     buffer->memSize = size;
@@ -14,7 +14,7 @@ void ringBuffer_createBuffer(RingBuffer* buffer, char* memPtr, RingBufferSize si
 
 //Copies the pointers and variables of SRC to DST
 //DOES NOT COPY the MEMORY CONTENTS
-void ringBuffer_softCopy(RingBuffer* src, RingBuffer* dst)
+void ringBuffer_softCopy(rint_buffer_t* src, rint_buffer_t* dst)
 {
     dst->memSize = src->memSize;
     dst->memory = src->memory;
@@ -23,7 +23,7 @@ void ringBuffer_softCopy(RingBuffer* src, RingBuffer* dst)
 }
 
 //Copies the memory contents AND the variables of SRC to DST
-void ringBuffer_duplicate(RingBuffer* src, RingBuffer* dst)
+void ringBuffer_duplicate(rint_buffer_t* src, rint_buffer_t* dst)
 {
     //No space to copy!
     if (dst->memSize == 0)
@@ -31,7 +31,7 @@ void ringBuffer_duplicate(RingBuffer* src, RingBuffer* dst)
         return;
     }
     
-    RingBufferSize dstMemSize = dst->memSize;
+    ring_buffer_size_t dstMemSize = dst->memSize;
     
     if (dstMemSize < ringBuffer_charsToRead(src))
     {
@@ -46,18 +46,18 @@ void ringBuffer_duplicate(RingBuffer* src, RingBuffer* dst)
 
 
 //Clears the contents of a buffer with '\0' and resets indexes
-void ringBuffer_reset(RingBuffer* buffer)
+void ringBuffer_reset(rint_buffer_t* buffer)
 {
     buffer->readIndex = 0;
     buffer->writeIndex = 0;
-    for (RingBufferSize i = 0; i < buffer->memSize; i++)
+    for (ring_buffer_size_t i = 0; i < buffer->memSize; i++)
     {
         buffer->memory[i] = '\0';
     }
 }
 
 //Returns true if the buffer is empty
-bool ringBuffer_isEmpty(RingBuffer* buffer)
+bool ringBuffer_isEmpty(rint_buffer_t* buffer)
 {
     return (buffer->readIndex == buffer->writeIndex);
 }
@@ -66,7 +66,7 @@ bool ringBuffer_isEmpty(RingBuffer* buffer)
  * Advance the readIndex by 1 position
  * If readIndex exceeds writeIndex, readIndex is set to writeIndex
  */
-void ringBuffer_incrementReadIndex(RingBuffer* buffer)
+void ringBuffer_incrementReadIndex(rint_buffer_t* buffer)
 {
     if (buffer->readIndex != buffer->writeIndex)
     {
@@ -84,14 +84,14 @@ void ringBuffer_incrementReadIndex(RingBuffer* buffer)
  * Advance the readIndex by LEN positions
  * If readIndex exceeds writeIndex, readIndex is set to writeIndex
  */
-void ringBuffer_advanceReadIndex(RingBuffer* buffer, RingBufferSize len)
+void ringBuffer_advanceReadIndex(rint_buffer_t* buffer, ring_buffer_size_t len)
 {
     //If empty...
     if (ringBuffer_isEmpty(buffer))
         return;
     
-    RingBufferSize wIndex = buffer->writeIndex;
-    RingBufferSize diff;
+    ring_buffer_size_t wIndex = buffer->writeIndex;
+    ring_buffer_size_t diff;
     
     if (wIndex > buffer->readIndex)
     {
@@ -140,10 +140,10 @@ void ringBuffer_advanceReadIndex(RingBuffer* buffer, RingBufferSize len)
 
 //Advances the ringIndex to the END of the 1st instance of STR in the buffer
 //If the string could not be found, this function returns false
-bool ringBuffer_advanceToString(RingBuffer* buffer, const char* str)
+bool ringBuffer_advanceToString(rint_buffer_t* buffer, const char* str)
 {    
     //Search Index
-    RingBufferSize sIndex = 0;
+    ring_buffer_size_t sIndex = 0;
     
     while ((!ringBuffer_isEmpty(buffer)) && (str[sIndex] != '\0'))
     {
@@ -179,14 +179,14 @@ bool ringBuffer_advanceToString(RingBuffer* buffer, const char* str)
 
 //Searches for STR in the buffer
 //Returns true if found, false if not.
-bool ringBuffer_find(RingBuffer* buffer, const char* str)
+bool ringBuffer_find(rint_buffer_t* buffer, const char* str)
 {
     if (ringBuffer_isEmpty(buffer))
     {
         return false;
     }
     
-    RingBufferSize wIndex, rIndex, sIndex;
+    ring_buffer_size_t wIndex, rIndex, sIndex;
     wIndex = buffer->writeIndex;
     rIndex = buffer->readIndex;
     sIndex = 0;
@@ -227,7 +227,7 @@ bool ringBuffer_find(RingBuffer* buffer, const char* str)
 }
 
 //Counts the number of characters matching SEARCH
-RingBufferSize ringBuffer_count(RingBuffer* buffer, char search)
+ring_buffer_size_t ringBuffer_count(rint_buffer_t* buffer, char search)
 {
     //If empty...
     if (ringBuffer_isEmpty(buffer))
@@ -235,9 +235,9 @@ RingBufferSize ringBuffer_count(RingBuffer* buffer, char search)
         return 0;
     }
     
-    RingBufferSize count = 0;
+    ring_buffer_size_t count = 0;
     
-    RingBufferSize wIndex, rIndex;
+    ring_buffer_size_t wIndex, rIndex;
     wIndex = buffer->writeIndex;
     rIndex = buffer->readIndex;
     
@@ -262,9 +262,9 @@ RingBufferSize ringBuffer_count(RingBuffer* buffer, char search)
 }
 
 //Returns the number of characters that can be read
-RingBufferSize ringBuffer_charsToRead(RingBuffer* buffer)
+ring_buffer_size_t ringBuffer_charsToRead(rint_buffer_t* buffer)
 {
-    RingBufferSize count = 0;
+    ring_buffer_size_t count = 0;
     
     if (buffer->writeIndex >= buffer->readIndex)
     {
@@ -282,14 +282,14 @@ RingBufferSize ringBuffer_charsToRead(RingBuffer* buffer)
 
 
 //Clears the buffer by advancing readIndex to writeIndex
-void ringBuffer_flushReadBuffer(RingBuffer* buffer)
+void ringBuffer_flushReadBuffer(rint_buffer_t* buffer)
 {
     buffer->readIndex = buffer->writeIndex;
 }
 
 //Advance the writeIndex by 1 Position
 //This function is called by the LOAD functions
-void ringBuffer_incrementWriteIndex(RingBuffer* buffer)
+void ringBuffer_incrementWriteIndex(rint_buffer_t* buffer)
 {
     buffer->writeIndex++;
     
@@ -301,7 +301,7 @@ void ringBuffer_incrementWriteIndex(RingBuffer* buffer)
 
 //Loads a character into a ring buffer
 //Returns FALSE if the ringBuffer overflows (operation will still complete, however)
-bool ringBuffer_loadCharacter(RingBuffer* buffer, char input)
+bool ringBuffer_loadCharacter(rint_buffer_t* buffer, char input)
 {
     buffer->memory[buffer->writeIndex] = input;
     ringBuffer_incrementWriteIndex(buffer);
@@ -311,11 +311,11 @@ bool ringBuffer_loadCharacter(RingBuffer* buffer, char input)
 
 //Loads LEN characters into a ring buffer
 //Returns FALSE if the ringBuffer overflows (operation will still complete, however)
-bool ringBuffer_loadCharacters(RingBuffer* buffer, const char* input, RingBufferSize len)
+bool ringBuffer_loadCharacters(rint_buffer_t* buffer, const char* input, ring_buffer_size_t len)
 {
     bool overflow = false;
     
-    for (RingBufferSize i = 0; i < len; i++)
+    for (ring_buffer_size_t i = 0; i < len; i++)
     {
         buffer->memory[buffer->writeIndex] = input[i];
         ringBuffer_incrementWriteIndex(buffer);
@@ -331,11 +331,11 @@ bool ringBuffer_loadCharacters(RingBuffer* buffer, const char* input, RingBuffer
 
 //Loads a NULL-terminated string into the ring buffer
 //Returns FALSE if the ringBuffer overflows (operation will still complete, however)
-bool ringBuffer_loadString(RingBuffer* buffer, const char* input)
+bool ringBuffer_loadString(rint_buffer_t* buffer, const char* input)
 {
     bool overflow = false;
     
-    for (RingBufferSize i = 0; input[i] != '\0'; i++)
+    for (ring_buffer_size_t i = 0; input[i] != '\0'; i++)
     {
         buffer->memory[buffer->writeIndex] = input[i];
         ringBuffer_incrementWriteIndex(buffer);
@@ -351,12 +351,12 @@ bool ringBuffer_loadString(RingBuffer* buffer, const char* input)
 
 //Returns the char at the current readIndex AND advances readIndex
 //If no data is in the buffer, then '\0' is returned
-char ringBuffer_getChar(RingBuffer* buffer)
+char ringBuffer_getChar(rint_buffer_t* buffer)
 {
     char c = '\0';
     
     //Cache writeIndex to protect against writes while being accessed
-    RingBufferSize writeIndex;
+    ring_buffer_size_t writeIndex;
     writeIndex = buffer->writeIndex;
     
     //If not empty
@@ -371,12 +371,12 @@ char ringBuffer_getChar(RingBuffer* buffer)
 
 //Returns the char at the current readIndex but does NOT advance readIndex
 //If no data is in the buffer, then '\0' is returned
-char ringBuffer_peekChar(RingBuffer* buffer)
+char ringBuffer_peekChar(rint_buffer_t* buffer)
 {
     char c = '\0';
     
     //Cache writeIndex to protect against writes while being accessed
-    RingBufferSize writeIndex;
+    ring_buffer_size_t writeIndex;
     writeIndex = buffer->writeIndex;
     
     //If not empty
@@ -396,7 +396,7 @@ char ringBuffer_peekChar(RingBuffer* buffer)
  * 
  * readIndex is not incremented.
  */
-RingBufferSize ringBuffer_copyBuffer(RingBuffer* buffer, char* dest, RingBufferSize len)
+ring_buffer_size_t ringBuffer_copyBuffer(rint_buffer_t* buffer, char* dest, ring_buffer_size_t len)
 {
     //If bigger than buffer size, reduce max count
     if (len > buffer->memSize)
@@ -405,9 +405,9 @@ RingBufferSize ringBuffer_copyBuffer(RingBuffer* buffer, char* dest, RingBufferS
     }
     
     //Cached Indexes
-    RingBufferSize rIndex = buffer->readIndex;
-    RingBufferSize wIndex = buffer->writeIndex;
-    RingBufferSize bWritten = 0;
+    ring_buffer_size_t rIndex = buffer->readIndex;
+    ring_buffer_size_t wIndex = buffer->writeIndex;
+    ring_buffer_size_t bWritten = 0;
     
     /* 
      * While...
@@ -451,7 +451,7 @@ RingBufferSize ringBuffer_copyBuffer(RingBuffer* buffer, char* dest, RingBufferS
  * 
  * readIndex is not incremented.
  */
-RingBufferSize ringBuffer_copyRawBuffer(RingBuffer* buffer, char* dest, RingBufferSize len)
+ring_buffer_size_t ringBuffer_copyRawBuffer(rint_buffer_t* buffer, char* dest, ring_buffer_size_t len)
 {
     //If bigger than buffer size, reduce max count
     if (len > buffer->memSize)
@@ -460,9 +460,9 @@ RingBufferSize ringBuffer_copyRawBuffer(RingBuffer* buffer, char* dest, RingBuff
     }
     
     //Cached Indexes
-    RingBufferSize rIndex = buffer->readIndex;
-    RingBufferSize wIndex = buffer->writeIndex;
-    RingBufferSize bWritten = 0;
+    ring_buffer_size_t rIndex = buffer->readIndex;
+    ring_buffer_size_t wIndex = buffer->writeIndex;
+    ring_buffer_size_t bWritten = 0;
     
     /* 
      * While...
@@ -494,7 +494,7 @@ RingBufferSize ringBuffer_copyRawBuffer(RingBuffer* buffer, char* dest, RingBuff
  * 
  * readIndex is not incremented.
  */
-RingBufferSize ringBuffer_copyBufferUntil(RingBuffer* buffer, char* dest, char delim, RingBufferSize len)
+ring_buffer_size_t ringBuffer_copyBufferUntil(rint_buffer_t* buffer, char* dest, char delim, ring_buffer_size_t len)
 {
     //If bigger than buffer size, reduce max count
     if (len > buffer->memSize)
@@ -503,9 +503,9 @@ RingBufferSize ringBuffer_copyBufferUntil(RingBuffer* buffer, char* dest, char d
     }
     
     //Cached Indexes
-    RingBufferSize rIndex = buffer->readIndex;
-    RingBufferSize wIndex = buffer->writeIndex;
-    RingBufferSize bWritten = 0;
+    ring_buffer_size_t rIndex = buffer->readIndex;
+    ring_buffer_size_t wIndex = buffer->writeIndex;
+    ring_buffer_size_t bWritten = 0;
     
     /* 
      * While...
@@ -549,7 +549,7 @@ RingBufferSize ringBuffer_copyBufferUntil(RingBuffer* buffer, char* dest, char d
  * 
  * readIndex is not incremented.
  */
-RingBufferSize ringBuffer_copyAndChop(RingBuffer* buffer, char* dest, char start, char stop, RingBufferSize len)
+ring_buffer_size_t ringBuffer_copyAndChop(rint_buffer_t* buffer, char* dest, char start, char stop, ring_buffer_size_t len)
 {
     //If bigger than buffer size, reduce max count
     if (len > buffer->memSize)
@@ -558,9 +558,9 @@ RingBufferSize ringBuffer_copyAndChop(RingBuffer* buffer, char* dest, char start
     }
     
     //Cached Indexes
-    RingBufferSize rIndex = buffer->readIndex;
-    RingBufferSize wIndex = buffer->writeIndex;
-    RingBufferSize bWritten = 0;
+    ring_buffer_size_t rIndex = buffer->readIndex;
+    ring_buffer_size_t wIndex = buffer->writeIndex;
+    ring_buffer_size_t bWritten = 0;
     
     bool hasStarted = false;
     

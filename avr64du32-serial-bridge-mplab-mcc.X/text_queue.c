@@ -1,11 +1,11 @@
-#include "TextQueue.h"
+#include "text_queue.h"
 
 #include "ringBuffer.h"
 #include "usb_cdc_virtual_serial_port.h"
 #include "circular_buffer.h"
 
 static char buffer[TEXT_QUEUE_SIZE];
-static RingBuffer ringBuffer;
+static rint_buffer_t ringBuffer;
 
 //Initializes the Text Queue
 void TextQueue_Initialize(void)
@@ -24,7 +24,7 @@ void TextQueue_LoadTransmitBuffer(void)
 {
     while (!ringBuffer_isEmpty(&ringBuffer))
     {
-        if (USB_CDCWrite(ringBuffer_peekChar(&ringBuffer)) == BUFFER_SUCCESS)
+        if (USB_CDCWrite(ringBuffer_peekChar(&ringBuffer)) == CDC_SUCCESS)
         {
             //Advance to next character
             ringBuffer_incrementReadIndex(&ringBuffer);

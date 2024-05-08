@@ -36,7 +36,7 @@ The AVR&reg; DU family of microcontrollers (MCU) contains a Full Speed (12 Mbps)
 
 1. For communication with the EEPROM, disconnect jumper 13 (EEPROM HOLD), as the Curiosity Nano LED conflicts with this signal.
 
-2. To communicate with the memory card (*optional*), bridge the PF0 contacts located on the back of the Curiosity Nano. However, this will cause issues with the 32 kHz crystal. 
+2. To communicate with the memory card (*optional*), bridge the PF0 contacts (J107) located on the back of the Curiosity Nano and cut strap J109. However, this prevents the use of the 32 kHz crystal.  
 
 ## Operation
 
