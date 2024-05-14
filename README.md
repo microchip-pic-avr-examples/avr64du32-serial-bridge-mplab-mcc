@@ -57,7 +57,7 @@ The AVR DU functions as a SPI and I<sup>2</sup>C Host that performs the communic
 #### SPI
 
 - SPI Clock Frequency: 1.25 MHz
-- Mode: 0 ()
+- Mode: 0, 0
 
 SPI commands have the following format:
 
